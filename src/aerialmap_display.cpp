@@ -17,7 +17,6 @@ limitations under the License. */
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreSceneNode.h>
 #include <OGRE/OgreTextureManager.h>
-#include <OGRE/OgreTechnique.h>
 
 #include "rviz/display_context.h"
 #include "rviz/frame_manager.h"
@@ -47,7 +46,7 @@ namespace rviz
  * Splitting this transform lookup is necessary to mitigate frame jitter.
  */
 
-std::string const AerialMapDisplay::MAP_FRAME = "map";
+std::string const AerialMapDisplay::MAP_FRAME = "earth";
 
 AerialMapDisplay::AerialMapDisplay() : Display()
 {
@@ -396,17 +395,19 @@ void AerialMapDisplay::updateCenterTile(sensor_msgs::NavSatFixConstPtr const& ms
   TileId const new_center_tile_id{ tile_url_, tile_coordinates, zoom_ };
   bool const center_tile_changed = (!center_tile_ || !(new_center_tile_id == *center_tile_));
 
+  ref_fix_ = msg;
+  
   if (not center_tile_changed)
   {
     // TODO: Maybe we should update the transform here even if the center tile did not change?
     // The localization might have been updated.
+    transformTileToMapFrame();
     return;
   }
 
   ROS_DEBUG_NAMED("rviz_satellite", "Updating center tile");
 
   center_tile_ = new_center_tile_id;
-  ref_fix_ = msg;
 
   requestTileTextures();
   transformTileToMapFrame();
